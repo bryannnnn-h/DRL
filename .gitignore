@@ -1,5 +1,5 @@
-.txt
-.csv
+*.txt
+*.csv
 data
 other
 trained_models
