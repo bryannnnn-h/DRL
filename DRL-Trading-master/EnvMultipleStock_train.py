@@ -62,6 +62,9 @@ class StockEnvTrain(gym.Env):
         self.observation_space = spaces.Box(low=0, high=np.inf, shape = (OBS_DIM,))
         # load data from a pandas dataframe
         self.data = self.df.loc[self.day,:]
+        self.data.loc[(self.data["tic"] == 2303) | (self.data["tic"] == 2308) | (self.data["tic"] == 2317) | (self.data["tic"] == 2330) \
+         | (self.data["tic"] == 2454) | (self.data["tic"] == 2882) | (self.data["tic"] == 2891) | (self.data["tic"] == 3008), ["adjcp", "open", \
+         "high", "low", "volume", "ajexdi", "macd", "rsi", "cci", "adx", "turbulence"]] = 0
         self.terminal = False             
         # initalize state
         '''
@@ -166,7 +169,9 @@ class StockEnvTrain(gym.Env):
             begin_total_asset = self.state[0]+ \
             sum(np.array(self.state[1:(STOCK_DIM+1)])*np.array(self.state[(STOCK_DIM+1):(STOCK_DIM*2+1)]))
             
-#             print("begin_total_asset:{}".format(begin_total_asset))            
+#             print("begin_total_asset:{}".format(begin_total_asset))
+            if actions[0] * actions[1] > 0:
+                actions[1] = actions[1]*(-1)          
             argsort_actions = np.argsort(actions)
             
             sell_index = argsort_actions[:np.where(actions < 0)[0].shape[0]]
@@ -174,9 +179,14 @@ class StockEnvTrain(gym.Env):
 
             for index in sell_index:
                 # print('take sell action'.format(actions[index]))
+                if index > 1:
+                    continue
                 self._sell_stock(index, actions[index])
 
+
             for index in buy_index:
+                if index > 1:
+                    continue
                 # print('take buy action: {}'.format(actions[index]))
                 self._buy_stock(index, actions[index])
 
@@ -186,7 +196,9 @@ class StockEnvTrain(gym.Env):
             
             self.day += 1
             self.data = self.df.loc[self.day,:]
-            
+            self.data.loc[(self.data["tic"] == 2303) | (self.data["tic"] == 2308) | (self.data["tic"] == 2317) | (self.data["tic"] == 2330) \
+            | (self.data["tic"] == 2454) | (self.data["tic"] == 2882) | (self.data["tic"] == 2891) | (self.data["tic"] == 3008), ["adjcp", "open", \
+            "high", "low", "volume", "ajexdi", "macd", "rsi", "cci", "adx", "turbulence"]] = 0
            
           
             
