@@ -5,7 +5,7 @@ import os
 
 
 now = datetime.datetime.now()
-date_time = now.strftime("%Y_%m_%d_%H-%M")
+date_time = now.strftime("%Y_%m_%d_%H-%M-%S")
 TRAINED_MODEL_DIR = f"trained_models/{date_time}"
 
 RESULT_DIR = "results"
@@ -19,7 +19,10 @@ VALID_START = "2016-01-01"   # date starting validation
 VALID_END = "2020-12-01"   # date ending validation
 OBS_DIM = 61   # dimension of state representation (select 10 of 0050 constituent stocks)
 
+operate_mode=0 #0: normal, 1: pair_trading
+#1301,1303,2303,2308,2317,2330,2454,2882,2891,3008
 tic_set = [1301,1303,2303,2308,2317,2330,2454,2882,2891,3008]
+tic_set_index=[0,1,2,3,4,5,6,7,8,9]
 
 #VIX
 vix_mean=18.1

@@ -12,7 +12,7 @@ from config import config
 
 from math import exp
 import os
-
+ 
 # shares normalization factor
 # 100 shares per trade
 HMAX_NORMALIZE = 100
@@ -60,9 +60,8 @@ class StockEnvTrade(gym.Env):
         self.observation_space = spaces.Box(low=0, high=np.inf, shape = (OBS_DIM,))
         # load data from a pandas dataframe
         self.data = self.df.loc[self.day,:]
-        self.data.loc[(self.data["tic"] == 2303) | (self.data["tic"] == 2308) | (self.data["tic"] == 2317) | (self.data["tic"] == 2330) \
-         | (self.data["tic"] == 2454) | (self.data["tic"] == 2882) | (self.data["tic"] == 2891) | (self.data["tic"] == 3008), ["adjcp", "open", \
-         "high", "low", "volume", "ajexdi", "macd", "rsi", "cci", "adx", "turbulence"]] = 0 
+        self.data.loc[~self.data["tic"].isin(config.tic_set), ["adjcp", "open", \
+        "high", "low", "volume", "ajexdi", "macd", "rsi", "cci", "adx", "turbulence"]] = 0
         self.terminal = False     
         self.turbulence_threshold = turbulence_threshold
         # initalize state
@@ -161,7 +160,8 @@ class StockEnvTrade(gym.Env):
         if self.terminal:   # eps ends
             '''
                 The last action will not be executed in the last step.
-                But, the terminal state has already been recorded for the next eps.
+                But, the terminal state has a
+                lready been recorded for the next eps.
             '''
             plt.plot(self.asset_memory,'r')
             plt.savefig('results/{}/account_value_trade_{}_{}.png'.format(config.RESULT_DIR, self.model_name, self.iteration))
@@ -199,7 +199,18 @@ class StockEnvTrade(gym.Env):
 
             df_total_value.columns = ['account_value']
             df_total_value['daily_return']=df_total_value.pct_change(1)
-            sharpe = (4**0.5)*df_total_value['daily_return'].mean() / df_total_value['daily_return'].std()
+            df_total_value_std = df_total_value['daily_return'].std()
+            tic_set = config.tic_set
+            tmp = []
+            val_tmp = self.df.groupby("tic")
+            for tic in tic_set:
+                val = val_tmp.get_group(tic)
+                open_list = list(val["open"])
+                close_list = list(val["adjcp"])
+                tmp.append((close_list[-1] - open_list[0])/open_list[0])
+            tmp_mean = np.mean(tmp)
+            #sharpe = (4**0.5)*df_total_value['daily_return'].mean() / df_total_value['daily_return'].std()
+            sharpe = (252 ** 0.5) * (df_total_value['daily_return'].mean() - (tmp_mean/(len(self.df)/10))) / df_total_value_std
             print("Sharpe: ",sharpe)
             
             df_rewards = pd.DataFrame(self.rewards_memory)
@@ -236,19 +247,20 @@ class StockEnvTrade(gym.Env):
             '''============================================'''
             self.action_for_one_step = [0 for _ in range(STOCK_DIM)]
             '''============================================'''
-            if actions[0] * actions[1] > 0:
-                actions[1] = actions[1]*(-1)
+            if config.operate_mode == 1:
+                if actions[0] * actions[1] > 0:
+                    actions[1] = actions[1]*(-1)
             argsort_actions = np.argsort(actions)   # sort from small to large
             sell_index = argsort_actions[:np.where(actions < 0)[0].shape[0]]
             buy_index = argsort_actions[::-1][:np.where(actions > 0)[0].shape[0]]    # reverse the np arrray first
 
             for index in sell_index:
-                if index > 1:
+                if index not in config.tic_set_index:
                     continue
                 self._sell_stock(index, actions[index])
 
             for index in buy_index:
-                if index > 1:
+                if index not in config.tic_set_index:
                     continue
                 self._buy_stock(index, actions[index])
                 
@@ -259,9 +271,8 @@ class StockEnvTrade(gym.Env):
             # gen next obs for agent
             self.day += 1
             self.data = self.df.loc[self.day,:]
-            self.data.loc[(self.data["tic"] == 2303) | (self.data["tic"] == 2308) | (self.data["tic"] == 2317) | (self.data["tic"] == 2330) \
-            | (self.data["tic"] == 2454) | (self.data["tic"] == 2882) | (self.data["tic"] == 2891) | (self.data["tic"] == 3008), ["adjcp", "open", \
-            "high", "low", "volume", "ajexdi", "macd", "rsi", "cci", "adx", "turbulence"]] = 0         
+            self.data.loc[~self.data["tic"].isin(config.tic_set), ["adjcp", "open", \
+            "high", "low", "volume", "ajexdi", "macd", "rsi", "cci", "adx", "turbulence"]] = 0        
             self.turbulence = self.data['turbulence'].values[0]
             self.state =  [self.state[0]] + \
                     self.data.adjcp.values.tolist() + \

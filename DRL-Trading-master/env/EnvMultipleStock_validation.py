@@ -53,9 +53,8 @@ class StockEnvValidation(gym.Env):
         self.observation_space = spaces.Box(low=0, high=np.inf, shape = (OBS_DIM,))
         # load data from a pandas dataframe
         self.data = self.df.loc[self.day,:]
-        self.data.loc[(self.data["tic"] == 2303) | (self.data["tic"] == 2308) | (self.data["tic"] == 2317) | (self.data["tic"] == 2330) \
-         | (self.data["tic"] == 2454) | (self.data["tic"] == 2882) | (self.data["tic"] == 2891) | (self.data["tic"] == 3008), ["adjcp", "open", \
-         "high", "low", "volume", "ajexdi", "macd", "rsi", "cci", "adx", "turbulence"]] = 0
+        self.data.loc[~self.data["tic"].isin(config.tic_set), ["adjcp", "open", \
+        "high", "low", "volume", "ajexdi", "macd", "rsi", "cci", "adx", "turbulence"]] = 0
         self.terminal = False     
         self.turbulence_threshold = turbulence_threshold
         # initalize state
@@ -153,30 +152,29 @@ class StockEnvValidation(gym.Env):
                 actions=np.array([-HMAX_NORMALIZE]*STOCK_DIM)
             begin_total_asset = self.state[0]+ \
             sum(np.array(self.state[1:(STOCK_DIM+1)])*np.array(self.state[(STOCK_DIM+1):(STOCK_DIM*2+1)]))
-
-            if actions[0] * actions[1] > 0:
-                actions[1] = actions[1]*(-1)  
+            if config.operate_mode == 1:
+                if actions[0] * actions[1] > 0:
+                    actions[1] = actions[1]*(-1) 
             argsort_actions = np.argsort(actions)
             
             sell_index = argsort_actions[:np.where(actions < 0)[0].shape[0]]
             buy_index = argsort_actions[::-1][:np.where(actions > 0)[0].shape[0]]
 
             for index in sell_index:
-                if index > 1:
+                if index not in config.tic_set_index:
                     continue
                 self._sell_stock(index, actions[index])
 
             for index in buy_index:
-                if index > 1:
+                if index not in config.tic_set_index:
                     continue
                 self._buy_stock(index, actions[index])
     
             # generate the next observation
             self.day += 1
             self.data = self.df.loc[self.day,:]
-            self.data.loc[(self.data["tic"] == 2303) | (self.data["tic"] == 2308) | (self.data["tic"] == 2317) | (self.data["tic"] == 2330) \
-            | (self.data["tic"] == 2454) | (self.data["tic"] == 2882) | (self.data["tic"] == 2891) | (self.data["tic"] == 3008), ["adjcp", "open", \
-            "high", "low", "volume", "ajexdi", "macd", "rsi", "cci", "adx", "turbulence"]] = 0        
+            self.data.loc[~self.data["tic"].isin(config.tic_set), ["adjcp", "open", \
+            "high", "low", "volume", "ajexdi", "macd", "rsi", "cci", "adx", "turbulence"]] = 0      
             self.turbulence = self.data['turbulence'].values[0]
             self.state =  [self.state[0]] + \
                     self.data.adjcp.values.tolist() + \

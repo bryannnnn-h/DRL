@@ -119,22 +119,22 @@ def get_validation_sharpe(iteration,val_data,start,over):
     # 'results/account_value_validation_{}.csv' stored when terminal in function "step" of EnvMultiStock_validation.py 
     df_total_value = pd.read_csv('results/{}/account_value_validation_{}.csv'.format(config.RESULT_DIR, iteration))#, index_col=0)   
     df_total_value.columns = ['account_value_train']
-    df_total_value_std = df_total_value.diff(1).std().iloc[0]
     df_total_value['daily_return'] = df_total_value.pct_change(1)
+    df_total_value_std = df_total_value['daily_return'].std()
     '''
         Seasonal? 63**0.5?
     '''
-    tic_set=[1301,1303]
+    tic_set=config.tic_set
     tmp = []
     val_tmp = val_data.groupby("tic")
-    total_open_list = []
+    #total_open_list = []
     for tic in tic_set:
         val = val_tmp.get_group(tic)
         open_list = list(val["open"])
-        total_open_list.append(open_list)
+        #total_open_list.append(open_list)
         close_list = list(val["adjcp"])
         tmp.append((close_list[-1] - open_list[0])/open_list[0])
-    total_open_list_mean = np.mean(total_open_list, axis=0)
+    #total_open_list_mean = np.mean(total_open_list, axis=0)
     tmp_mean = np.mean(tmp)
     '''over_sp = over.split('-')
     over_sp[2] = str(int(over_sp[2])-1)
@@ -151,7 +151,7 @@ def get_validation_sharpe(iteration,val_data,start,over):
     arg_2 = (df_total_value['daily_return']).mean()
     arg_3 = tmp_mean
     arg_4 = df_total_value_std
-    sharpe = ((len(val_data)/10) ** 0.5) * (df_total_value['daily_return'].mean() - tmp_mean) / df_total_value_std
+    sharpe = (252 ** 0.5) * (df_total_value['daily_return'].mean() - (tmp_mean/(len(val_data)/10))) / df_total_value_std
     #print("arg_1: ", arg_1)
     ##print("arg_2: ", arg_2)
     #print("arg_3: ", arg_3)
