@@ -45,7 +45,7 @@ def run_model() -> None:
     '''
         This function is written in models.py
     '''
-    for i in range(25,27):
+    for i in range(29,30):
         print(i,' Round\n')
         run_ensemble_strategy(df=data, 
                               unique_trade_date=unique_trade_date,

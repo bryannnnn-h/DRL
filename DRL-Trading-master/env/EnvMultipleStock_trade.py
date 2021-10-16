@@ -210,7 +210,7 @@ class StockEnvTrade(gym.Env):
                 tmp.append((close_list[-1] - open_list[0])/open_list[0])
             tmp_mean = np.mean(tmp)
             #sharpe = (4**0.5)*df_total_value['daily_return'].mean() / df_total_value['daily_return'].std()
-            sharpe = (252 ** 0.5) * (df_total_value['daily_return'].mean() - (tmp_mean/(len(self.df)/10))) / df_total_value_std
+            sharpe = (252 ** 0.5) * (df_total_value['daily_return'].mean() - 0.05/365) / df_total_value_std
             print("Sharpe: ",sharpe)
             
             df_rewards = pd.DataFrame(self.rewards_memory)

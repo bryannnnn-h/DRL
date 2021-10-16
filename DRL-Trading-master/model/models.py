@@ -151,7 +151,7 @@ def get_validation_sharpe(iteration,val_data,start,over):
     arg_2 = (df_total_value['daily_return']).mean()
     arg_3 = tmp_mean
     arg_4 = df_total_value_std
-    sharpe = (252 ** 0.5) * (df_total_value['daily_return'].mean() - (tmp_mean/(len(val_data)/10))) / df_total_value_std
+    sharpe = (252 ** 0.5) * (df_total_value['daily_return'].mean() - 0.05/365) / df_total_value_std
     #print("arg_1: ", arg_1)
     ##print("arg_2: ", arg_2)
     #print("arg_3: ", arg_3)
@@ -275,7 +275,6 @@ def run_ensemble_strategy(df, unique_trade_date, rebalance_window, validation_wi
     # use quantile as thres (e.g. 0.5 -> median)
     insample_turbulence_threshold = np.quantile(insample_turbulence.turbulence.values, .75)#.90)
     
-
     start = time.time()
     
     '''
